@@ -9,6 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import datetime
+from db_controller import Controller
 
 
 class Ui_MainWindow(object):
@@ -94,26 +96,26 @@ class RegistrationDialog(QtWidgets.QDialog):
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setObjectName("verticalLayout")
 
-        self.date = QtWidgets.QLineEdit()
-        self.date.setInputMask("")
-        self.date.setEchoMode(QtWidgets.QLineEdit.Normal)
-        self.date.setObjectName("email")
-        self.date.setPlaceholderText('Введите логин')
-        self.verticalLayout.addWidget(self.date)
+        self.login = QtWidgets.QLineEdit()
+        self.login.setInputMask("")
+        self.login.setEchoMode(QtWidgets.QLineEdit.Normal)
+        self.login.setObjectName("email")
+        self.login.setPlaceholderText('Введите логин')
+        self.verticalLayout.addWidget(self.login)
 
-        self.date = QtWidgets.QLineEdit()
-        self.date.setInputMask("")
-        self.date.setEchoMode(QtWidgets.QLineEdit.Normal)
-        self.date.setObjectName("password")
-        self.date.setPlaceholderText('Введите пароль')
-        self.verticalLayout.addWidget(self.date)
+        self.password = QtWidgets.QLineEdit()
+        self.password.setInputMask("")
+        self.password.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.password.setObjectName("password")
+        self.password.setPlaceholderText('Введите пароль')
+        self.verticalLayout.addWidget(self.password)
 
-        self.date = QtWidgets.QLineEdit()
-        self.date.setInputMask("")
-        self.date.setEchoMode(QtWidgets.QLineEdit.Normal)
-        self.date.setObjectName("password_repeat")
-        self.date.setPlaceholderText('Повторите пароль')
-        self.verticalLayout.addWidget(self.date)
+        self.password_repeat = QtWidgets.QLineEdit()
+        self.password_repeat.setInputMask("")
+        self.password_repeat.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.password_repeat.setObjectName("password_repeat")
+        self.password_repeat.setPlaceholderText('Повторите пароль')
+        self.verticalLayout.addWidget(self.password_repeat)
 
         self.label = QtWidgets.QLabel("Дата рождения:")
         self.date = QtWidgets.QDateEdit()
@@ -140,8 +142,43 @@ class RegistrationDialog(QtWidgets.QDialog):
         self.close()
 
     def createUser(self):
-        # TODO:  Добавить алгоритм регистрации пользователя
-        self.close()
+        self.login.setStyleSheet("background-color: None")
+        self.login.update()
+        self.password.setStyleSheet("background-color: None")
+        self.password_repeat.setStyleSheet("background-color: None")
+        self.password.update()
+        self.password_repeat.update()
+        try:
+            datetime.datetime.strptime(self.date.text(), "%d %b %Y")
+            if len(self.login.text()) == 0:
+                self.label.setStyleSheet("background-color: Red")
+                self.label.setText('Минимальная длина логина - 1 символ.')
+                self.label.update()
+
+            elif self.password.text() != self.password_repeat.text():
+                self.label.setStyleSheet("background-color: Red")
+                self.label.setText('Пароли не совпадают.')
+                self.label.update()
+
+            elif len(self.login.text()) > 0 and len(self.password.text()) > 0 and self.password.text() == self.password_repeat.text():
+                date = self.date.text()
+                login = self.login.text()
+                password = self.password.text()
+                date = datetime.datetime.strptime(date, "%d %b %Y")
+                date = f"{date.year}-{date.month}-{date.day}"
+                callback = Controller().signUp(email=login, password=password, date=date)
+                self.label.setStyleSheet("background-color: Green")
+                self.label.setText('Пользователь создан')
+                self.label.update()
+        except Exception as exc:
+            print(exc)
+            if exc.code == 'gkpj':
+                self.label.setText('Пользователь с таким логином уже существует')
+                self.label.setStyleSheet("background-color: Red")
+            else:
+                self.label.setStyleSheet("background-color: Red")
+                self.label.setText('Данные введены неверно.')
+                self.label.update()
 
 
 class RestorePasswordDialog(QtWidgets.QDialog):

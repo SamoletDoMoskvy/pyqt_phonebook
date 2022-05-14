@@ -9,6 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from db_controller import Controller
+import datetime
 
 
 class Ui_Form(object):
@@ -93,3 +95,86 @@ class Ui_Form(object):
         self.editButton.setText(_translate("Form", "Изменить"))
         self.deleteButton.setText(_translate("Form", "Удалить"))
         self.logoutButton.setText(_translate("Form", "Выйти"))
+
+
+class CreateDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(CreateDialog, self).__init__(parent)
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        self.name = QtWidgets.QLineEdit()
+        self.name.setInputMask("")
+        self.name.setEchoMode(QtWidgets.QLineEdit.Normal)
+        self.name.setObjectName("name")
+        self.name.setPlaceholderText('Имя')
+        self.verticalLayout.addWidget(self.name)
+
+        self.phone = QtWidgets.QLineEdit()
+        self.phone.setInputMask("")
+        self.phone.setEchoMode(QtWidgets.QLineEdit.Normal)
+        self.phone.setObjectName("phone_number")
+        self.phone.setPlaceholderText('Телефон')
+        self.verticalLayout.addWidget(self.phone)
+
+        self.label = QtWidgets.QLabel("Дата рождения:")
+        self.date = QtWidgets.QDateEdit()
+        self.date.setObjectName("date")
+        self.verticalLayout.addWidget(self.label)
+        self.verticalLayout.addWidget(self.date)
+
+        self.acceptButton = QtWidgets.QPushButton(self)
+        self.acceptButton.setObjectName("acceptButton")
+        self.acceptButton.clicked.connect(self.create_contact)
+        self.acceptButton.setText("Ок")
+        self.verticalLayout.addWidget(self.acceptButton)
+
+        self.cancleButton = QtWidgets.QPushButton(self)
+        self.cancleButton.setObjectName("cancleButton")
+        self.cancleButton.clicked.connect(self.closeDialog)
+        self.cancleButton.setText("Отмена")
+        self.verticalLayout.addWidget(self.cancleButton)
+
+        self.setWindowTitle("Контакт")
+        self.setGeometry(QtCore.QRect(0, 0, 289, 30))
+
+    def closeDialog(self):
+        self.close()
+
+    def create_contact(self):
+        self.name.setStyleSheet("background-color: None")
+        self.name.update()
+        self.phone.setStyleSheet("background-color: None")
+        self.phone.update()
+        try:
+            datetime.datetime.strptime(self.date.text(), "%d %b %Y")
+            if len(self.name.text()) == 0:
+                self.label.setStyleSheet("background-color: Red")
+                self.label.setText('Минимальная длина имени - 1 символ.')
+                self.label.update()
+
+            elif len(self.phone.text()) == 0:
+                self.label.setStyleSheet("background-color: Red")
+                self.label.setText('Минимальная длина номера - 1 символ')
+                self.label.update()
+
+            elif len(self.name.text()) > 0 and len(self.phone.text()) > 0:
+                date = self.date.text()
+                name = self.name.text()
+                phone = self.phone.text()
+                date = datetime.datetime.strptime(date, "%d %b %Y")
+                date = f"{date.year}-{date.month}-{date.day}"
+                callback = Controller().create(name=name, phone=phone, date=date)
+                self.label.setStyleSheet("background-color: Green")
+                self.label.setText('Пользователь создан')
+                self.label.update()
+        except Exception as exc:
+            print(exc)
+            if exc.code == 'gkpj':
+                self.label.setText('Контакт уже существует')
+                self.label.setStyleSheet("background-color: Red")
+            else:
+                self.label.setStyleSheet("background-color: Red")
+                self.label.setText('Данные введены неверно.')
+                self.label.update()
